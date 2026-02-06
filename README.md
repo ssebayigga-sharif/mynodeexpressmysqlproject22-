@@ -54,27 +54,58 @@ CREATE TABLE users (
 
 
      Configure database connection
+  REPLACE THESE WITH YOUR CREDENTIALS.
+  
+     const port = 4000;
+     const { faker } = require("@faker-js/faker");
+      const bodyParser = require("body-parser");
 
-Update app.js (or your database config file) with your MySQL credentials:
+      // SET OUR ENGINE;
+     app.set("view engine", "ejs");
+                 app.use(bodyParser.urlencoded({ extended: true }));
+         app.use(express.static("views/public"));
 
-const mysql = require("mysql2");
+      const connection = mysql.createConnection({
+       host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      });
 
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "yourpassword",
-  database: "node_sql_db"
-});
+     // LETS FIRST USE EXPRESS ONLY FOR NOW;
+     app.get("/", (req, res) => {
+      // We want to return the number of users from our database;
+     let myCount = "SELECT COUNT(*) AS count FROM users";
+     connection.query(myCount, (err, result) => {
+    if (err) throw err;
+    let count = result[0].count;
+    res.render("Home", { users: count });
+    });
+    //res.send("we have" + users + "users"); // something like this;
+     });
 
-db.connect((err) => {
-  if (err) throw err;
-  console.log("✅ MySQL connected");
-});
+     // POST REQUESTS ARE TACKLED IN THIS WAY;
+     app.post("/register", (req, res) => {
+     let person = { email: req.body.email };
+     connection.query("INSERT INTO users SET ?", person, (err, result) => {
+    if (err) throw err;
+    //console.log(result);
+    res.redirect("/");
+     });
+    });
+     // START THE SERVER;
+     app.listen(port, () => {
+     console.log(`Example Sharitech is  listening on port ${port}`);
+        });
+
+        
+OR VISIT https://expressjs.com/
+
+YOU WILL NEED THE .ENV file
 
 
 
-
-       Usage
+       Usage  
 
 Start the server
 
