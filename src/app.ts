@@ -1,22 +1,28 @@
-require("dotenv").config();
-const mysql = require("mysql2");
-const express = require("express");
+console.log("DB_USER:", process.env.DB_USER);
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
+import dotenv from "dotenv";
+dotenv.config();
+import express from "express";
+import type { Request, Response } from "express";
+import { Connection } from "mysql2";
+import mysql from "mysql2";
+import { faker } from "@faker-js/faker";
+import type { RowDataPacket } from "mysql2";
 const app = express();
 const port = 4000;
-const { faker } = require("@faker-js/faker");
-const bodyParser = require("body-parser");
+//import bodyParser from "body-parser";
+
+export interface User {
+  id?: number; // optional because DB auto-generates it
+  email: string;
+  created_at?: Date; // optional if auto-filled
+}
 
 // SET OUR ENGINE;
 app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static("views/public"));
-//  CONNECTING TO THE DATABSE; NOW;
-// const connection = mysql.createConnection({
-//   host: "localhost",
-//   user: "root",
-//   password: "Sharitech",
-//   database: "node_sql_db",
-// });
+//CONNECTING TO MYSQL
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -25,30 +31,50 @@ const connection = mysql.createConnection({
 });
 
 // LETS FIRST USE EXPRESS ONLY FOR NOW;
-app.get("/", (req, res) => {
-  // We want to return the number of users from our database;
-  let myCount = "SELECT COUNT(*) AS count FROM users";
-  connection.query(myCount, (err, result) => {
-    if (err) throw err;
-    let count = result[0].count;
-    res.render("Home", { users: count });
-  });
-  //res.send("we have" + users + "users"); // something like this;
-});
+app.get("/", async (req: Request, res: Response) => {
+  try {
+    interface countRow extends RowDataPacket {
+      count: number;
+    }
 
+    const [rows] = await connection
+      .promise()
+      .query<countRow[]>("SELECT COUNT(*) AS count FROM users");
+
+    const count = rows[0].count;
+    res.render("Home", { users: count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Database query failure");
+  }
+});
 // POST REQUESTS ARE TACKLED IN THIS WAY;
-app.post("/register", (req, res) => {
-  let person = { email: req.body.email };
-  connection.query("INSERT INTO users SET ?", person, (err, result) => {
-    if (err) throw err;
-    //console.log(result);
+app.post("/register", async (req: Request, res: Response) => {
+  try {
+    let person: User = { email: req.body.email };
+
+    const [result] = await connection
+      .promise()
+      .query("INSERT INTO users SET ?", [person]);
     res.redirect("/");
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Database insertion failure");
+  }
 });
 // START THE SERVER;
-app.listen(port, () => {
+app.listen(port, (): void => {
   console.log(`Example Sharitech is  listening on port ${port}`);
 });
+// We want to return the number of users from our database;
+//   let myCount = "SELECT COUNT(*) AS count FROM users";
+//   connection.query<RowDataPacket[]>(myCount, (err, result) => {
+//     if (err) throw err;
+//     let  count : number = result[0].count;
+//     res.render("Home", { users: count });
+//   });
+
+// });
 // LET THIS WAIT FIRST;
 
 // app.get("/joke", (req, res) => {
@@ -102,3 +128,10 @@ app.listen(port, () => {
 //   // End the connection after the query is done
 //   connection.end();
 // });
+//  CONNECTING TO THE DATABSE; NOW;
+// const connection = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "Sharitech",
+//   database: "node_sql_db",
+// })
