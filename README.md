@@ -1,4 +1,4 @@
-Node.js + Express + MySQL User Management Mini Project
+Node.js + Express + MySQL + Typescript User Management Mini Project
 
 A simple Node.js project that connects Express and MySQL to manage user emails. The project allows adding user
 emails through a UI and dynamically tracks the total number of users. It also comes pre-populated with 500 users generated using Faker.js for testing.
@@ -24,6 +24,8 @@ Database: MySQL
 Fake Data: Faker from express
 
 Frontend: Basic HTML/CSS (served via Express)
+
+Typescript.
 
 Installation
 
